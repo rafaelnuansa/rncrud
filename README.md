@@ -75,16 +75,6 @@ php artisan make:crud Task -m
 | `--help` | | Display detailed usage instructions and examples. |
 
 ---
-
-## 🕹 Interactive Mode Tips
-
-Saat menjalankan perintah, Anda akan masuk ke mode interaktif:
-* **Arrow Keys**: Navigasi antar pilihan.
-* **Spacebar**: Memilih/membatalkan pilihan file (Multi-select).
-* **Enter**: Konfirmasi dan jalankan generator.
-
----
-
 ## 🧩 Customizing Templates (Stubs)
 
 If you want to customize the generated code (e.g., changing the UI to Bootstrap or modifying the Controller logic), publish the stubs:
