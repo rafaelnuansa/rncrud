@@ -9,18 +9,24 @@ use Illuminate\Support\Str;
 class RNCrudCommand extends Command
 {
     protected $signature = 'make:crud {name}';
-    protected $description = 'Generate CRUD lengkap termasuk Model, Controller, Migration, dan Routing';
+    protected $description = 'Generate complete CRUD including Model, Controller, Migration, and Routing';
 
     public function handle()
     {
         $name = $this->argument('name');
+
+        // 1. Validasi Input: Pastikan hanya karakter alfanumerik (mencegah error nama class)
+        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $name)) {
+            $this->error("Error: Invalid name '$name'. Please use only alphanumeric characters.");
+            return;
+        }
+
         $modelName = Str::studly($name);
         $tableName = Str::plural(Str::snake($name));
         $migrationName = date('Y_m_d_His') . "_create_{$tableName}_table.php";
 
-        $this->info("Memulai proses generate CRUD untuk: $modelName");
+        $this->info("Starting CRUD generation for: $modelName");
 
-        // Definisikan lokasi file relatif terhadap root project
         $paths = [
             'Model'      => "app/Models/{$modelName}.php",
             'Controller' => "app/Http/Controllers/{$modelName}Controller.php",
@@ -28,27 +34,34 @@ class RNCrudCommand extends Command
             'Route'      => "routes/web.php (Updated)",
         ];
 
-        // 1. Generate Files
+        // 2. Proses Generate File
         $this->generateFromStub($modelName, 'model', base_path($paths['Model']));
         $this->generateFromStub($modelName, 'controller', base_path($paths['Controller']));
         $this->generateFromStub($modelName, 'migration', base_path($paths['Migration']));
 
-        // 2. Tambahkan Routing
+        // 3. Tambahkan Routing
         $this->appendRoute($modelName, $tableName);
 
-        // 3. Tampilkan Ringkasan dalam Tabel
+        // 4. Tampilkan Tabel Ringkasan
         $this->newLine();
-        $this->line("Ringkasan File Terbuat:");
+        $this->line("File Generation Summary:");
         
         $tableData = [];
         foreach ($paths as $type => $location) {
             $tableData[] = [$type, $location, 'Created'];
         }
         
-        $this->table(['Tipe', 'Lokasi File', 'Status'], $tableData);
+        $this->table(['Type', 'File Location', 'Status'], $tableData);
+
+        // 5. Fitur Auto-Migrate: Tanya user apakah ingin langsung migrate database
+        $this->newLine();
+        if ($this->confirm("Files generated successfully! Do you want to run 'php artisan migrate' now?", true)) {
+            $this->info("Running migrations...");
+            $this->call('migrate');
+        }
 
         $this->newLine();
-        $this->info("Semua proses selesai! Silakan cek file Anda.");
+        $this->info("All processes completed!");
     }
 
     protected function generateFromStub($name, $stubName, $targetPath)
@@ -58,7 +71,7 @@ class RNCrudCommand extends Command
         $finalStubPath = File::exists($customStubPath) ? $customStubPath : $stubPath;
 
         if (!File::exists($finalStubPath)) {
-            $this->error("Error: Stub untuk {$stubName} tidak ditemukan!");
+            $this->error("Error: Stub for {$stubName} not found at: {$finalStubPath}");
             return;
         }
 
@@ -76,6 +89,12 @@ class RNCrudCommand extends Command
     protected function appendRoute($modelName, $tableName)
     {
         $routePath = base_path('routes/web.php');
+        
+        if (!File::exists($routePath)) {
+            $this->warn("Warning: routes/web.php not found. Skipping route registration.");
+            return false;
+        }
+
         $controllerNamespace = "App\Http\Controllers\\{$modelName}Controller";
         $routeLine = "\nRoute::resource('$tableName', \\$controllerNamespace::class);";
 
