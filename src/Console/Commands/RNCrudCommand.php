@@ -5,37 +5,19 @@ namespace rafaelnuansa\MapCrud\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+// Import the multi-select prompt
+use function Laravel\Prompts\multiselect;
+use function Laravel\Prompts\select;
 
 class RNCrudCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     * Shortcuts: -s for soft-delete, -m for no-migration
-     */
-    protected $signature = 'make:crud {name : The name of the model (e.g. Product or Admin/Product)} 
-                            {--fields= : Define fields (e.g. title:string,content:text)} 
-                            {--s|soft-delete : Use SoftDeletes trait and migration column}
-                            {--m|no-migration : Skip migration generation}
+    protected $signature = 'make:crud {name : The name of the model} 
+                            {--fields= : Define fields} 
+                            {--s|soft-delete : Use SoftDeletes}
+                            {--m|no-migration : Skip migration}
                             {--force : Overwrite existing files}';
 
-    /**
-     * The console command description.
-     */
-    protected $description = 'Generate advanced CRUD with interactive file selection, API mode, and ORM relations';
-
-    /**
-     * Detailed help text for the command.
-     */
-    protected $help = "This command generates a full CRUD boilerplate.
-    
-Usage Examples:
-  php artisan make:crud Post --fields=\"title:string,body:text\" --soft-delete
-  php artisan make:crud Category -s -m (Soft delete enabled, Migration skipped)
-  
-Key Features:
-  - [-s | --soft-delete]: Adds DeletedAt to migration and SoftDeletes trait to Model.
-  - [-m | --no-migration]: Prevents the creation of a migration file.
-  - Interactive selection of Controller type and specific files.";
+    protected $description = 'Generate advanced CRUD with interactive multi-select and ORM relations';
 
     public function handle()
     {
@@ -45,28 +27,24 @@ Key Features:
         $softDelete = $this->option('soft-delete');
         $noMigration = $this->option('no-migration');
 
-        // 1. User Interaction: Select Controller Type
-        $type = $this->choice('Select Controller type?', ['Web (Blade)', 'API (JSON)'], 0);
+        // 1. Interactive Selection using Laravel Prompts (Arrow Keys + Space)
+        $type = select(
+            label: 'Select Controller type?',
+            options: ['Web (Blade)', 'API (JSON)'],
+            default: 'Web (Blade)'
+        );
         $isApi = ($type === 'API (JSON)');
 
-        // 2. Select files to generate
+        // 2. Multi-select for files
         $options = ['Model', 'Controller', 'Routes'];
-        
-        // Add Migration to options only if --no-migration is NOT set
-        if (!$noMigration) {
-            $options[] = 'Migration';
-        }
-        
-        if (!$isApi) {
-            $options[] = 'Views (Blade)';
-        }
+        if (!$noMigration) $options[] = 'Migration';
+        if (!$isApi) $options[] = 'Views (Blade)';
 
-        $selectedFiles = $this->choice(
-            'Which files would you like to generate? (Comma separated, e.g.: 0,1,2)',
-            $options,
-            implode(',', array_keys($options)), 
-            null,
-            true 
+        $selectedFiles = multiselect(
+            label: 'Which files would you like to generate? (Space to select, Enter to confirm)',
+            options: $options,
+            default: $options, // Select all by default
+            required: true
         );
 
         // Parsing Name & Folders
@@ -78,10 +56,9 @@ Key Features:
         $variableName = Str::camel($modelName);
         $fields = $this->parseFields($fieldsInput);
 
-        // Path definitions
         $paths = $this->getPaths($modelName, $subFolder, $tableName);
 
-        // 3. Execution Based on Selection
+        // 3. Execution
         if (in_array('Migration', $selectedFiles)) {
             $this->generateMigration($tableName, $fields, $paths['Migration'], $force, $softDelete);
         }
