@@ -5,19 +5,26 @@ namespace rafaelnuansa\MapCrud\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-// Import the multi-select prompt
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
+use function Laravel\Prompts\confirm;
 
 class RNCrudCommand extends Command
 {
-    protected $signature = 'make:crud {name : The name of the model} 
-                            {--fields= : Define fields} 
-                            {--s|soft-delete : Use SoftDeletes}
-                            {--m|no-migration : Skip migration}
+    /**
+     * The name and signature of the console command.
+     */
+    protected $signature = 'make:crud {name : The name of the model (e.g. Product or Admin/Product)} 
+                            {--fields= : Define fields (e.g. title:string,content:text)} 
+                            {--s|soft-delete : Use SoftDeletes trait and migration column}
+                            {--m|no-migration : Skip migration generation}
                             {--force : Overwrite existing files}';
 
-    protected $description = 'Generate advanced CRUD with interactive multi-select and ORM relations';
+    /**
+     * The console command description.
+     */
+    protected $description = 'Generate advanced CRUD with Interactive Field Builder and Multi-select';
 
     public function handle()
     {
@@ -27,7 +34,7 @@ class RNCrudCommand extends Command
         $softDelete = $this->option('soft-delete');
         $noMigration = $this->option('no-migration');
 
-        // 1. Interactive Selection using Laravel Prompts (Arrow Keys + Space)
+        // 1. Pilih Tipe Controller
         $type = select(
             label: 'Select Controller type?',
             options: ['Web (Blade)', 'API (JSON)'],
@@ -35,7 +42,21 @@ class RNCrudCommand extends Command
         );
         $isApi = ($type === 'API (JSON)');
 
-        // 2. Multi-select for files
+        // 2. Field Builder (Interaktif jika --fields kosong)
+        $fields = [];
+        if ($fieldsInput) {
+            $fields = $this->parseFields($fieldsInput);
+        } else {
+            $fields = $this->interactiveFieldBuilder();
+        }
+
+        // Jika user tidak mengisi field sama sekali melalui prompt
+        if (empty($fields)) {
+            $this->error("No fields defined. Generation cancelled.");
+            return;
+        }
+
+        // 3. Multi-select Files (Gunakan Space untuk pilih, Enter konfirmasi)
         $options = ['Model', 'Controller', 'Routes'];
         if (!$noMigration) $options[] = 'Migration';
         if (!$isApi) $options[] = 'Views (Blade)';
@@ -43,7 +64,7 @@ class RNCrudCommand extends Command
         $selectedFiles = multiselect(
             label: 'Which files would you like to generate? (Space to select, Enter to confirm)',
             options: $options,
-            default: $options, // Select all by default
+            default: $options,
             required: true
         );
 
@@ -54,11 +75,10 @@ class RNCrudCommand extends Command
 
         $tableName = Str::plural(Str::snake($modelName));
         $variableName = Str::camel($modelName);
-        $fields = $this->parseFields($fieldsInput);
 
         $paths = $this->getPaths($modelName, $subFolder, $tableName);
 
-        // 3. Execution
+        // 4. Proses Eksekusi Berdasarkan Pilihan
         if (in_array('Migration', $selectedFiles)) {
             $this->generateMigration($tableName, $fields, $paths['Migration'], $force, $softDelete);
         }
@@ -89,6 +109,47 @@ class RNCrudCommand extends Command
         }
     }
 
+    /**
+     * Fitur Interactive Field Builder
+     */
+    protected function interactiveFieldBuilder()
+    {
+        $fields = [];
+        $addMore = true;
+
+        $this->info("Starting Interactive Field Builder...");
+
+        while ($addMore) {
+            $name = text(
+                label: 'Field Name (e.g. title, category_id)',
+                placeholder: 'Leave empty to finish',
+                required: count($fields) === 0
+            );
+
+            if (!$name) break;
+
+            $isRelation = str_ends_with($name, '_id');
+            
+            $type = $isRelation ? 'foreignId' : select(
+                label: "Select type for '$name'",
+                options: ['string', 'text', 'integer', 'boolean', 'date', 'float', 'json'],
+                default: 'string'
+            );
+
+            $fields[] = [
+                'name' => $name,
+                'type' => $type,
+                'is_relation' => $isRelation,
+                'relation_name' => $isRelation ? Str::camel(str_replace('_id', '', $name)) : null,
+                'related_model' => $isRelation ? Str::studly(str_replace('_id', '', $name)) : null,
+            ];
+
+            $addMore = confirm('Add another field?', true);
+        }
+
+        return $fields;
+    }
+
     protected function getPaths($model, $folder, $table)
     {
         $controllerName = "{$model}Controller";
@@ -103,8 +164,6 @@ class RNCrudCommand extends Command
 
     protected function parseFields($input)
     {
-        if (!$input) return [['name' => 'name', 'type' => 'string', 'is_relation' => false]];
-
         $fields = [];
         foreach (explode(',', $input) as $pair) {
             $parts = explode(':', $pair);
@@ -252,6 +311,7 @@ class RNCrudCommand extends Command
         $namespacePrefix = $subFolder ? str_replace('/', '\\', $subFolder) . "\\" : "";
         $controllerNamespace = "App\Http\Controllers\\{$namespacePrefix}{$model}Controller";
         $routeLine = "\nRoute::resource('$table', \\$controllerNamespace::class);";
+        
         if (!Str::contains(File::get($path), "Route::resource('$table'")) {
             File::append($path, $routeLine);
             $this->line("<info>Updated Routes:</info> {$file}");
