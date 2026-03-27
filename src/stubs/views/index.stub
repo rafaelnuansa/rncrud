@@ -1,0 +1,30 @@
+<div class="p-6">
+    <div class="flex justify-between mb-4">
+        <h1 class="text-2xl font-bold">{{modelName}} List</h1>
+        <a href="{{ route('{{tableName}}.create') }}" class="bg-blue-500 text-white px-4 py-2 rounded">Add New</a>
+    </div>
+
+    <table class="w-full border">
+        <thead>
+            <tr class="bg-gray-100">
+                <th class="border p-2 text-left">ID</th>
+                <th class="border p-2 text-left">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(${{tableName}} as $item)
+            <tr>
+                <td class="border p-2">{{ $item->id }}</td>
+                <td class="border p-2">
+                    <a href="{{ route('{{tableName}}.edit', $item->id) }}" class="text-yellow-600">Edit</a>
+                    <form action="{{ route('{{tableName}}.destroy', $item->id) }}" method="POST" class="inline">
+                        @csrf @method('DELETE')
+                        <button class="text-red-600 ml-2" onclick="return confirm('Delete?')">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    {{ ${{tableName}}->links() }}
+</div>

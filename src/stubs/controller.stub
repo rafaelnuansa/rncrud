@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace {{namespace}};
 
 use App\Models\{{modelName}};
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
 class {{modelName}}Controller extends Controller
@@ -21,13 +22,13 @@ class {{modelName}}Controller extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required',
+            {{validationRules}}
         ]);
 
         {{modelName}}::create($request->all());
 
         return redirect()->route('{{tableName}}.index')
-            ->with('success', '{{modelName}} berhasil ditambahkan.');
+            ->with('success', '{{modelName}} created successfully.');
     }
 
     public function show({{modelName}} ${{variableName}})
@@ -43,13 +44,13 @@ class {{modelName}}Controller extends Controller
     public function update(Request $request, {{modelName}} ${{variableName}})
     {
         $request->validate([
-            'name' => 'required',
+            {{validationRules}}
         ]);
 
         ${{variableName}}->update($request->all());
 
         return redirect()->route('{{tableName}}.index')
-            ->with('success', '{{modelName}} berhasil diperbarui.');
+            ->with('success', '{{modelName}} updated successfully.');
     }
 
     public function destroy({{modelName}} ${{variableName}})
@@ -57,6 +58,6 @@ class {{modelName}}Controller extends Controller
         ${{variableName}}->delete();
 
         return redirect()->route('{{tableName}}.index')
-            ->with('success', '{{modelName}} berhasil dihapus.');
+            ->with('success', '{{modelName}} deleted successfully.');
     }
 }

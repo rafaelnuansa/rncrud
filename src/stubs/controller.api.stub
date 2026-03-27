@@ -1,0 +1,52 @@
+<?php
+
+namespace {{namespace}};
+
+use App\Models\{{modelName}};
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+
+class {{modelName}}Controller extends Controller
+{
+    public function index()
+    {
+        return response()->json({{modelName}}::all());
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            {{validationRules}}
+        ]);
+
+        $data = {{modelName}}::create($request->all());
+        return response()->json([
+            'message' => '{{modelName}} created successfully',
+            'data' => $data
+        ], 201);
+    }
+
+    public function show({{modelName}} ${{variableName}})
+    {
+        return response()->json(${{variableName}});
+    }
+
+    public function update(Request $request, {{modelName}} ${{variableName}})
+    {
+        $request->validate([
+            {{validationRules}}
+        ]);
+
+        ${{variableName}}->update($request->all());
+        return response()->json([
+            'message' => '{{modelName}} updated successfully',
+            'data' => ${{variableName}}
+        ]);
+    }
+
+    public function destroy({{modelName}} ${{variableName}})
+    {
+        ${{variableName}}->delete();
+        return response()->json(['message' => '{{modelName}} deleted successfully']);
+    }
+}

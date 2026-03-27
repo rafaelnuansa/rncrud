@@ -1,0 +1,11 @@
+<div class="p-6">
+    <h1 class="text-2xl font-bold mb-4">Create {{modelName}}</h1>
+    <form action="{{ route('{{tableName}}.store') }}" method="POST">
+        @csrf
+        <div class="mb-4">
+            <label class="block">Name (Default)</label>
+            <input type="text" name="name" class="border p-2 w-full" required>
+        </div>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Save</button>
+    </form>
+</div>

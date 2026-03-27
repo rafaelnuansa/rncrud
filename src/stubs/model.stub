@@ -9,9 +9,6 @@ class {{modelName}} extends Model
 {
     use HasFactory;
 
-    /**
-     * Properti yang tidak boleh diisi secara massal.
-     * Kosongkan agar semua field bisa diisi (Fillable).
-     */
     protected $guarded = [];
+    {{relations}}
 }
