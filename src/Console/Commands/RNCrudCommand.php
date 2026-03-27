@@ -8,14 +8,16 @@ use Illuminate\Support\Str;
 
 class RNCrudCommand extends Command
 {
-    protected $signature = 'make:crud {name}';
+    // Menambahkan opsi --force agar user bisa menimpa file secara sengaja
+    protected $signature = 'make:crud {name} {--force}';
     protected $description = 'Generate complete CRUD including Model, Controller, Migration, and Routing';
 
     public function handle()
     {
         $name = $this->argument('name');
+        $force = $this->option('force');
 
-        // 1. Validasi Input: Pastikan hanya karakter alfanumerik (mencegah error nama class)
+        // 1. Validasi Input
         if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $name)) {
             $this->error("Error: Invalid name '$name'. Please use only alphanumeric characters.");
             return;
@@ -25,35 +27,48 @@ class RNCrudCommand extends Command
         $tableName = Str::plural(Str::snake($name));
         $migrationName = date('Y_m_d_His') . "_create_{$tableName}_table.php";
 
-        $this->info("Starting CRUD generation for: $modelName");
-
+        // Definisikan path target
         $paths = [
-            'Model'      => "app/Models/{$modelName}.php",
-            'Controller' => "app/Http/Controllers/{$modelName}Controller.php",
-            'Migration'  => "database/migrations/{$migrationName}",
-            'Route'      => "routes/web.php (Updated)",
+            'Model'      => base_path("app/Models/{$modelName}.php"),
+            'Controller' => base_path("app/Http/Controllers/{$modelName}Controller.php"),
+            'Migration'  => base_path("database/migrations/{$migrationName}"),
         ];
 
-        // 2. Proses Generate File
-        $this->generateFromStub($modelName, 'model', base_path($paths['Model']));
-        $this->generateFromStub($modelName, 'controller', base_path($paths['Controller']));
-        $this->generateFromStub($modelName, 'migration', base_path($paths['Migration']));
+        // 2. Validasi Keberadaan File (Kecuali jika --force digunakan)
+        if (!$force) {
+            foreach (['Model', 'Controller'] as $type) {
+                if (File::exists($paths[$type])) {
+                    $this->error("Error: {$type} already exists at {$paths[$type]}.");
+                    $this->info("Use --force to overwrite the existing files.");
+                    return;
+                }
+            }
+        }
 
-        // 3. Tambahkan Routing
+        $this->info("Starting CRUD generation for: $modelName");
+
+        // 3. Proses Generate File
+        $this->generateFromStub($modelName, 'model', $paths['Model']);
+        $this->generateFromStub($modelName, 'controller', $paths['Controller']);
+        $this->generateFromStub($modelName, 'migration', $paths['Migration']);
+
+        // 4. Tambahkan Routing
         $this->appendRoute($modelName, $tableName);
 
-        // 4. Tampilkan Tabel Ringkasan
+        // 5. Tampilkan Tabel Ringkasan
         $this->newLine();
         $this->line("File Generation Summary:");
         
-        $tableData = [];
-        foreach ($paths as $type => $location) {
-            $tableData[] = [$type, $location, 'Created'];
-        }
+        $tableData = [
+            ['Model', "app/Models/{$modelName}.php", 'Created'],
+            ['Controller', "app/Http/Controllers/{$modelName}Controller.php", 'Created'],
+            ['Migration', "database/migrations/{$migrationName}", 'Created'],
+            ['Route', "routes/web.php", 'Updated'],
+        ];
         
         $this->table(['Type', 'File Location', 'Status'], $tableData);
 
-        // 5. Fitur Auto-Migrate: Tanya user apakah ingin langsung migrate database
+        // 6. Fitur Auto-Migrate
         $this->newLine();
         if ($this->confirm("Files generated successfully! Do you want to run 'php artisan migrate' now?", true)) {
             $this->info("Running migrations...");
@@ -71,7 +86,7 @@ class RNCrudCommand extends Command
         $finalStubPath = File::exists($customStubPath) ? $customStubPath : $stubPath;
 
         if (!File::exists($finalStubPath)) {
-            $this->error("Error: Stub for {$stubName} not found at: {$finalStubPath}");
+            $this->error("Error: Stub for {$stubName} not found.");
             return;
         }
 
