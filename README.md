@@ -1,4 +1,4 @@
-# RNCrud -  Laravel CRUD Generator
+# RNCrud - Advanced Laravel CRUD Generator 🚀
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
 [![Total Downloads](https://img.shields.io/packagist/dt/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
@@ -8,15 +8,15 @@
 
 ---
 
-## ✨ Features (v1.1.1)
+## ✨ Features (v1.1.2)
 
+* 🛠️ **Interactive Field Builder** (New!) Forget manual typing. If you skip the `--fields` flag, the package will guide you step-by-step to define your columns and data types.
 * 🤖 **Modern Interactive UI** Uses **Laravel Prompts** for a sleek terminal experience. Navigate with arrow keys and toggle selections with the spacebar.
 * 🌐 **API & Web Support** Choose between a standard Controller (Blade) or an API Controller (JSON response).
 * 📂 **Multi-Namespace Support** Create files inside sub-folders (e.g., `Admin/Product`).
 * 🔗 **Smart ORM Relations** Automatically detects foreign keys (ending with `_id`) to generate `belongsTo` relationships in Models and `constrained()` in Migrations.
 * 🗑️ **Soft Deletes Support** Easily add `SoftDeletes` trait to Models and `softDeletes()` column to migrations with a single flag (`-s`).
-* 🛠️ **Dynamic Field Generation** Automatically generates Migration columns, Controller validation, and Blade forms/tables based on `--fields` input.
-* 🎨 **Blade Generation** Generates Blade files (`index`, `create`, `edit`, `show`) .
+* 🎨 **Blade Generation** Generates Blade files (`index`, `create`, `edit`, `show`) with clean and modern structures.
 
 ---
 
@@ -39,8 +39,14 @@ composer require rafaelnuansa/rncrud
 
 ## 🚀 Usage
 
-Run the Artisan command:
+### 1. The Easy Way (Fully Interactive)
+Simply run the command and follow the prompts:
+```bash
+php artisan make:crud ModelName
+```
 
+### 2. The Pro Way (Using Flags)
+Run everything in one line:
 ```bash
 php artisan make:crud ModelName --fields="column_name:type"
 ```
@@ -64,6 +70,15 @@ php artisan make:crud Task -m
 
 ---
 
+## 🕹 Interactive Mode Guide
+
+* **Arrow Keys**: Navigate between options.
+* **Spacebar**: Toggle file selections (Model, Controller, etc.).
+* **Enter**: Confirm selection or go to the next step.
+* **Field Builder**: Type your field name, select the type from the list, and confirm to add more.
+
+---
+
 ## 🛠 Command Options
 
 | Option | Shortcut | Description |
@@ -75,6 +90,7 @@ php artisan make:crud Task -m
 | `--help` | | Display detailed usage instructions and examples. |
 
 ---
+
 ## 🧩 Customizing Templates (Stubs)
 
 If you want to customize the generated code (e.g., changing the UI to Bootstrap or modifying the Controller logic), publish the stubs:
@@ -83,9 +99,7 @@ If you want to customize the generated code (e.g., changing the UI to Bootstrap 
 php artisan vendor:publish --tag=rncrud-stubs
 ```
 
-The files will be available in `stubs/vendor/rncrud/`. Ensure your `model.stub` includes the following placeholders to support Soft Deletes:
-* `{{useSoftDeletes}}`
-* `{{traitSoftDeletes}}`
+The files will be available in `stubs/vendor/rncrud/`. 
 
 ---
 
