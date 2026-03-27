@@ -1,3 +1,5 @@
+# RNCrud -  Laravel CRUD Generator
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
 [![Total Downloads](https://img.shields.io/packagist/dt/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
 [![License](https://img.shields.io/packagist/l/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
@@ -6,15 +8,15 @@
 
 ---
 
-## ✨ Features (v1.1.0)
+## ✨ Features (v1.1.1)
 
-* 🤖 **Interactive Prompts** Visually choose which files to generate (Model, Controller, Migration, Views, or Routes).
+* 🤖 **Modern Interactive UI** Uses **Laravel Prompts** for a sleek terminal experience. Navigate with arrow keys and toggle selections with the spacebar.
 * 🌐 **API & Web Support** Choose between a standard Controller (Blade) or an API Controller (JSON response).
 * 📂 **Multi-Namespace Support** Create files inside sub-folders (e.g., `Admin/Product`).
 * 🔗 **Smart ORM Relations** Automatically detects foreign keys (ending with `_id`) to generate `belongsTo` relationships in Models and `constrained()` in Migrations.
-* 🗑️ **Soft Deletes Support** Easily add `SoftDeletes` trait to Models and `softDeletes()` column to migrations with a single flag.
+* 🗑️ **Soft Deletes Support** Easily add `SoftDeletes` trait to Models and `softDeletes()` column to migrations with a single flag (`-s`).
 * 🛠️ **Dynamic Field Generation** Automatically generates Migration columns, Controller validation, and Blade forms/tables based on `--fields` input.
-* 🎨 **Blade Generation** Generates Blade files (`index`, `create`, `edit`, `show`).
+* 🎨 **Blade Generation** Generates Blade files (`index`, `create`, `edit`, `show`) with clean, customizable structures.
 
 ---
 
@@ -74,6 +76,15 @@ php artisan make:crud Task -m
 
 ---
 
+## 🕹 Interactive Mode Tips
+
+Saat menjalankan perintah, Anda akan masuk ke mode interaktif:
+* **Arrow Keys**: Navigasi antar pilihan.
+* **Spacebar**: Memilih/membatalkan pilihan file (Multi-select).
+* **Enter**: Konfirmasi dan jalankan generator.
+
+---
+
 ## 🧩 Customizing Templates (Stubs)
 
 If you want to customize the generated code (e.g., changing the UI to Bootstrap or modifying the Controller logic), publish the stubs:
@@ -107,3 +118,4 @@ This package is open-sourced under the **MIT License**.
 ## 👨‍💻 Author
 
 Developed by **[Rafael Nuansa](https://github.com/rafaelnuansa)**.
+```
