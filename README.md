@@ -1,5 +1,3 @@
-# RNCrud - Advanced Laravel CRUD Generator 🚀
-
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
 [![Total Downloads](https://img.shields.io/packagist/dt/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
 [![License](https://img.shields.io/packagist/l/rafaelnuansa/rncrud.svg?style=flat-square)](https://packagist.org/packages/rafaelnuansa/rncrud)
@@ -8,25 +6,15 @@
 
 ---
 
-## ✨ Features (v1.0.5)
+## ✨ Features (v1.1.0)
 
-* 🤖 **Interactive Prompts**  
-  Visually choose which files to generate (Model, Controller, Migration, Views, or Routes).
-
-* 🌐 **API & Web Support**  
-  Choose between a standard Controller (Blade) or an API Controller (JSON response).
-
-* 📂 **Multi-Namespace Support**  
-  Create files inside sub-folders (e.g., `Admin/Product`).
-
-* 🔗 **Smart ORM Relations**  
-  Automatically detects foreign keys (ending with `_id`) to generate `belongsTo` relationships in Models and `constrained()` in Migrations.
-
-* 🛠 **Dynamic Field Generation**  
-  Automatically generates Migration columns, Controller validation, and Blade forms/tables based on `--fields` input.
-
-* 🎨 **Tailwind Ready**  
-  Generates Blade files (`index`, `create`, `edit`, `show`) with basic Tailwind CSS styling.
+* 🤖 **Interactive Prompts** Visually choose which files to generate (Model, Controller, Migration, Views, or Routes).
+* 🌐 **API & Web Support** Choose between a standard Controller (Blade) or an API Controller (JSON response).
+* 📂 **Multi-Namespace Support** Create files inside sub-folders (e.g., `Admin/Product`).
+* 🔗 **Smart ORM Relations** Automatically detects foreign keys (ending with `_id`) to generate `belongsTo` relationships in Models and `constrained()` in Migrations.
+* 🗑️ **Soft Deletes Support** Easily add `SoftDeletes` trait to Models and `softDeletes()` column to migrations with a single flag.
+* 🛠️ **Dynamic Field Generation** Automatically generates Migration columns, Controller validation, and Blade forms/tables based on `--fields` input.
+* 🎨 **Tailwind Ready** Generates Blade files (`index`, `create`, `edit`, `show`) with basic Tailwind CSS styling.
 
 ---
 
@@ -43,7 +31,7 @@ Install via Composer:
 
 ```bash
 composer require rafaelnuansa/rncrud
-````
+```
 
 ---
 
@@ -55,53 +43,48 @@ Run the Artisan command:
 php artisan make:crud ModelName --fields="column_name:type"
 ```
 
-### Pro Example
+### Pro Examples
 
-Create a Product CRUD inside an Admin folder with a relation to Category:
-
+**1. Standard CRUD with Soft Deletes:**
 ```bash
-php artisan make:crud Admin/Product --fields="category_id:foreign,name:string,price:integer,description:text"
+php artisan make:crud Post --fields="title:string,body:text" --soft-delete
 ```
 
-### How It Works
+**2. Admin CRUD with Relations (Using Shortcuts):**
+```bash
+php artisan make:crud Admin/Product -s --fields="category_id:foreign,name:string,price:integer"
+```
 
-1. **Interactive Prompt**
-   RNCrud asks whether you want **Web (Blade)** or **API (JSON)** mode.
-
-2. **File Selection**
-   Select which files you want to generate (e.g., skip Routes if you prefer manual setup).
-
-3. **Smart Logic**
-
-   * **Migration**: `category_id` automatically becomes `foreignId()->constrained()`.
-   * **Model**: Automatically includes a `category()` relationship method.
-   * **Views**: Generates data tables and input forms based on defined fields.
-   * **Routes**: Appends `Route::resource` to the appropriate file (`web.php` or `api.php`).
+**3. Generate only Model and Controller (No Migration):**
+```bash
+php artisan make:crud Task -m
+```
 
 ---
 
 ## 🛠 Command Options
 
-| Option     | Description                                               |
-| ---------- | --------------------------------------------------------- |
-| `--fields` | Define database columns (Format: `name:type,name2:type`). |
-| `--force`  | Overwrite existing files without warning.                 |
+| Option | Shortcut | Description |
+| :--- | :--- | :--- |
+| `--fields` | | Define database columns (Format: `name:type,name2:type`). |
+| `--soft-delete` | `-s` | Adds `SoftDeletes` trait to Model and column to Migration. |
+| `--no-migration`| `-m` | Skips generating the migration file. |
+| `--force` | | Overwrite existing files without warning. |
+| `--help` | | Display detailed usage instructions and examples. |
 
 ---
 
 ## 🧩 Customizing Templates (Stubs)
 
-Want to customize the Blade UI (e.g., switch to Bootstrap) or modify the default Controller structure? Publish the stubs:
+If you want to customize the generated code (e.g., changing the UI to Bootstrap or modifying the Controller logic), publish the stubs:
 
 ```bash
 php artisan vendor:publish --tag=rncrud-stubs
 ```
 
-The files will be available in:
-
-```
-stubs/vendor/rncrud/
-```
+The files will be available in `stubs/vendor/rncrud/`. Ensure your `model.stub` includes the following placeholders to support Soft Deletes:
+* `{{useSoftDeletes}}`
+* `{{traitSoftDeletes}}`
 
 ---
 

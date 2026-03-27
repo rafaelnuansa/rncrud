@@ -8,28 +8,68 @@ use Illuminate\Support\Str;
 
 class RNCrudCommand extends Command
 {
-    protected $signature = 'make:crud {name} {--fields=} {--force}';
+    /**
+     * The name and signature of the console command.
+     * Shortcuts: -s for soft-delete, -m for no-migration
+     */
+    protected $signature = 'make:crud {name : The name of the model (e.g. Product or Admin/Product)} 
+                            {--fields= : Define fields (e.g. title:string,content:text)} 
+                            {--s|soft-delete : Use SoftDeletes trait and migration column}
+                            {--m|no-migration : Skip migration generation}
+                            {--force : Overwrite existing files}';
+
+    /**
+     * The console command description.
+     */
     protected $description = 'Generate advanced CRUD with interactive file selection, API mode, and ORM relations';
+
+    /**
+     * Detailed help text for the command.
+     */
+    protected $help = "This command generates a full CRUD boilerplate.
+    
+Usage Examples:
+  php artisan make:crud Post --fields=\"title:string,body:text\" --soft-delete
+  php artisan make:crud Category -s -m (Soft delete enabled, Migration skipped)
+  
+Key Features:
+  - [-s | --soft-delete]: Adds DeletedAt to migration and SoftDeletes trait to Model.
+  - [-m | --no-migration]: Prevents the creation of a migration file.
+  - Interactive selection of Controller type and specific files.";
 
     public function handle()
     {
         $inputName = $this->argument('name');
         $fieldsInput = $this->option('fields');
         $force = $this->option('force');
+        $softDelete = $this->option('soft-delete');
+        $noMigration = $this->option('no-migration');
 
-        // 1. Interaksi User: Pilih Jenis Controller
-        $type = $this->choice('Pilih jenis Controller?', ['Web (Blade)', 'API (JSON)'], 0);
+        // 1. User Interaction: Select Controller Type
+        $type = $this->choice('Select Controller type?', ['Web (Blade)', 'API (JSON)'], 0);
         $isApi = ($type === 'API (JSON)');
 
-        // 2. Pilih file yang ingin di-generate
-        $options = ['Model', 'Controller', 'Migration', 'Routes'];
+        // 2. Select files to generate
+        $options = ['Model', 'Controller', 'Routes'];
+        
+        // Add Migration to options only if --no-migration is NOT set
+        if (!$noMigration) {
+            $options[] = 'Migration';
+        }
+        
         if (!$isApi) {
             $options[] = 'Views (Blade)';
         }
 
-        $selectedFiles = $this->checkbox('File apa saja yang ingin di-generate?', $options, [0, 1, 2, 3]);
+        $selectedFiles = $this->choice(
+            'Which files would you like to generate? (Comma separated, e.g.: 0,1,2)',
+            $options,
+            implode(',', array_keys($options)), 
+            null,
+            true 
+        );
 
-        // Parsing Nama & Folder
+        // Parsing Name & Folders
         $nameParts = explode('/', $inputName);
         $modelName = Str::studly(end($nameParts));
         $subFolder = count($nameParts) > 1 ? implode('/', array_slice($nameParts, 0, -1)) : '';
@@ -41,13 +81,13 @@ class RNCrudCommand extends Command
         // Path definitions
         $paths = $this->getPaths($modelName, $subFolder, $tableName);
 
-        // 3. Eksekusi Berdasarkan Pilihan
+        // 3. Execution Based on Selection
         if (in_array('Migration', $selectedFiles)) {
-            $this->generateMigration($tableName, $fields, $paths['Migration'], $force);
+            $this->generateMigration($tableName, $fields, $paths['Migration'], $force, $softDelete);
         }
 
         if (in_array('Model', $selectedFiles)) {
-            $this->generateModel($modelName, $fields, $paths['Model'], $force);
+            $this->generateModel($modelName, $fields, $paths['Model'], $force, $softDelete);
         }
 
         if (in_array('Controller', $selectedFiles)) {
@@ -67,7 +107,7 @@ class RNCrudCommand extends Command
         $this->newLine();
         $this->info("Successfully generated CRUD for $modelName!");
 
-        if (in_array('Migration', $selectedFiles) && $this->confirm("Jalankan php artisan migrate?", true)) {
+        if (in_array('Migration', $selectedFiles) && $this->confirm("Would you like to run php artisan migrate?", true)) {
             $this->call('migrate');
         }
     }
@@ -105,10 +145,10 @@ class RNCrudCommand extends Command
         return $fields;
     }
 
-    protected function generateMigration($tableName, $fields, $path, $force)
+    protected function generateMigration($tableName, $fields, $path, $force, $softDelete)
     {
         if (File::exists($path) && !$force) {
-            $this->warn("Migration sudah ada, skipping...");
+            $this->warn("Migration already exists, skipping...");
             return;
         }
 
@@ -121,6 +161,10 @@ class RNCrudCommand extends Command
             }
         }
 
+        if ($softDelete) {
+            $schemaFields .= "\$table->softDeletes();\n            ";
+        }
+
         $stub = File::get(__DIR__ . "/../../stubs/migration.stub");
         $content = str_replace(['{{tableName}}', '{{fields}}'], [$tableName, $schemaFields], $stub);
 
@@ -129,10 +173,10 @@ class RNCrudCommand extends Command
         $this->line("<info>Created Migration:</info> {$path}");
     }
 
-    protected function generateModel($modelName, $fields, $path, $force)
+    protected function generateModel($modelName, $fields, $path, $force, $softDelete)
     {
         if (File::exists($path) && !$force) {
-            $this->warn("Model sudah ada, skipping...");
+            $this->warn("Model already exists, skipping...");
             return;
         }
 
@@ -143,8 +187,15 @@ class RNCrudCommand extends Command
             }
         }
 
+        $useSoftDeletes = $softDelete ? "use Illuminate\Database\Eloquent\SoftDeletes;\n" : "";
+        $traitSoftDeletes = $softDelete ? "    use SoftDeletes;\n" : "";
+
         $stub = File::get(__DIR__ . "/../../stubs/model.stub");
-        $content = str_replace(['{{modelName}}', '{{relations}}'], [$modelName, $relations], $stub);
+        $content = str_replace(
+            ['{{modelName}}', '{{relations}}', '{{useSoftDeletes}}', '{{traitSoftDeletes}}'], 
+            [$modelName, $relations, $useSoftDeletes, $traitSoftDeletes], 
+            $stub
+        );
 
         File::ensureDirectoryExists(dirname($path));
         File::put($path, $content);
@@ -154,7 +205,7 @@ class RNCrudCommand extends Command
     protected function generateController($model, $var, $table, $namespace, $stubName, $path, $fields, $force)
     {
         if (File::exists($path) && !$force) {
-            $this->warn("Controller sudah ada, skipping...");
+            $this->warn("Controller already exists, skipping...");
             return;
         }
 
@@ -180,7 +231,6 @@ class RNCrudCommand extends Command
         $viewPath = resource_path("views/{$table}");
         File::ensureDirectoryExists($viewPath);
 
-        // 1. Generate Table Headers & Data (untuk index.blade.php)
         $tableHeaders = "";
         $tableData = "";
         foreach ($fields as $field) {
@@ -189,7 +239,6 @@ class RNCrudCommand extends Command
             $tableData .= "<td class=\"border p-2\">{{ \$item->{$field['name']} }}</td>\n                ";
         }
 
-        // 2. Generate Form Inputs (untuk create & edit)
         $formInputs = "";
         foreach ($fields as $field) {
             $label = Str::title(str_replace('_', ' ', $field['name']));
@@ -225,9 +274,7 @@ class RNCrudCommand extends Command
 
         $namespacePrefix = $subFolder ? str_replace('/', '\\', $subFolder) . "\\" : "";
         $controllerNamespace = "App\Http\Controllers\\{$namespacePrefix}{$model}Controller";
-
         $routeLine = "\nRoute::resource('$table', \\$controllerNamespace::class);";
-
         if (!Str::contains(File::get($path), "Route::resource('$table'")) {
             File::append($path, $routeLine);
             $this->line("<info>Updated Routes:</info> {$file}");
