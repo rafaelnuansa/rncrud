@@ -1,6 +1,7 @@
 {
     "name": "rafaelnuansa/rncrud",
     "description": "Custom Command untuk generate crud Laravel",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "rafaelnuansa\\MapCrud\\": "src/"
@@ -14,7 +15,9 @@
         }
     },
     "require": {
-        "php": "^8.1",
-        "illuminate/support": "^10.0|^11.0"
+        "php": ">=8.1 <8.6",
+        "illuminate/support": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
+        "illuminate/filesystem": "^10.0|^11.0|^12.0|^13.0"
     }
 }
