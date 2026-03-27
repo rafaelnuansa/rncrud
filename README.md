@@ -14,7 +14,7 @@
 * 🔗 **Smart ORM Relations** Automatically detects foreign keys (ending with `_id`) to generate `belongsTo` relationships in Models and `constrained()` in Migrations.
 * 🗑️ **Soft Deletes Support** Easily add `SoftDeletes` trait to Models and `softDeletes()` column to migrations with a single flag.
 * 🛠️ **Dynamic Field Generation** Automatically generates Migration columns, Controller validation, and Blade forms/tables based on `--fields` input.
-* 🎨 **Tailwind Ready** Generates Blade files (`index`, `create`, `edit`, `show`) with basic Tailwind CSS styling.
+* 🎨 **Blade Generation** Generates Blade files (`index`, `create`, `edit`, `show`).
 
 ---
 
