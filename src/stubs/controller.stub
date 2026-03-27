@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\{{modelName}};
+use Illuminate\Http\Request;
+
+class {{modelName}}Controller extends Controller
+{
+    public function index()
+    {
+        ${{tableName}} = {{modelName}}::latest()->paginate(10);
+        return view('{{tableName}}.index', compact('{{tableName}}'));
+    }
+
+    public function create()
+    {
+        return view('{{tableName}}.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => 'required',
+        ]);
+
+        {{modelName}}::create($request->all());
+
+        return redirect()->route('{{tableName}}.index')
+            ->with('success', '{{modelName}} berhasil ditambahkan.');
+    }
+
+    public function show({{modelName}} ${{variableName}})
+    {
+        return view('{{tableName}}.show', compact('{{variableName}}'));
+    }
+
+    public function edit({{modelName}} ${{variableName}})
+    {
+        return view('{{tableName}}.edit', compact('{{variableName}}'));
+    }
+
+    public function update(Request $request, {{modelName}} ${{variableName}})
+    {
+        $request->validate([
+            'name' => 'required',
+        ]);
+
+        ${{variableName}}->update($request->all());
+
+        return redirect()->route('{{tableName}}.index')
+            ->with('success', '{{modelName}} berhasil diperbarui.');
+    }
+
+    public function destroy({{modelName}} ${{variableName}})
+    {
+        ${{variableName}}->delete();
+
+        return redirect()->route('{{tableName}}.index')
+            ->with('success', '{{modelName}} berhasil dihapus.');
+    }
+}
