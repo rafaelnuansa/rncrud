@@ -16,29 +16,51 @@ class RNCrudCommand extends Command
         $name = $this->argument('name');
         $modelName = Str::studly($name);
         $tableName = Str::plural(Str::snake($name));
-
-        $this->info("🚀 Memulai proses generate CRUD untuk $modelName...");
-
-        // 1. Generate Model, Migration, Controller menggunakan Stub
-        $this->generateFromStub($modelName, 'model', app_path("Models/{$modelName}.php"));
-        $this->generateFromStub($modelName, 'controller', app_path("Http/Controllers/{$modelName}Controller.php"));
-        
         $migrationName = date('Y_m_d_His') . "_create_{$tableName}_table.php";
-        $this->generateFromStub($modelName, 'migration', database_path("migrations/{$migrationName}"));
 
-        // 2. Tambahkan Routing otomatis ke web.php
+        $this->info("Memulai proses generate CRUD untuk: $modelName");
+
+        // Definisikan lokasi file relatif terhadap root project
+        $paths = [
+            'Model'      => "app/Models/{$modelName}.php",
+            'Controller' => "app/Http/Controllers/{$modelName}Controller.php",
+            'Migration'  => "database/migrations/{$migrationName}",
+            'Route'      => "routes/web.php (Updated)",
+        ];
+
+        // 1. Generate Files
+        $this->generateFromStub($modelName, 'model', base_path($paths['Model']));
+        $this->generateFromStub($modelName, 'controller', base_path($paths['Controller']));
+        $this->generateFromStub($modelName, 'migration', base_path($paths['Migration']));
+
+        // 2. Tambahkan Routing
         $this->appendRoute($modelName, $tableName);
 
-        $this->info("✅ Semua file berhasil di-generate!");
+        // 3. Tampilkan Ringkasan dalam Tabel
+        $this->newLine();
+        $this->line("Ringkasan File Terbuat:");
+        
+        $tableData = [];
+        foreach ($paths as $type => $location) {
+            $tableData[] = [$type, $location, 'Created'];
+        }
+        
+        $this->table(['Tipe', 'Lokasi File', 'Status'], $tableData);
+
+        $this->newLine();
+        $this->info("Semua proses selesai! Silakan cek file Anda.");
     }
 
     protected function generateFromStub($name, $stubName, $targetPath)
     {
         $stubPath = __DIR__ . "/../../stubs/{$stubName}.stub";
-        
-        // Cek jika user punya custom stub
         $customStubPath = base_path("stubs/vendor/rncrud/{$stubName}.stub");
         $finalStubPath = File::exists($customStubPath) ? $customStubPath : $stubPath;
+
+        if (!File::exists($finalStubPath)) {
+            $this->error("Error: Stub untuk {$stubName} tidak ditemukan!");
+            return;
+        }
 
         $content = File::get($finalStubPath);
         $content = str_replace(
@@ -47,7 +69,6 @@ class RNCrudCommand extends Command
             $content
         );
 
-        // Pastikan direktori tujuan ada
         File::ensureDirectoryExists(dirname($targetPath));
         File::put($targetPath, $content);
     }
@@ -56,17 +77,13 @@ class RNCrudCommand extends Command
     {
         $routePath = base_path('routes/web.php');
         $controllerNamespace = "App\Http\Controllers\\{$modelName}Controller";
-        
-        // Kode yang akan ditambahkan
         $routeLine = "\nRoute::resource('$tableName', \\$controllerNamespace::class);";
 
-        // Cek apakah route sudah ada agar tidak duplikat
         $currentContent = File::get($routePath);
-        if (!Str::contains($currentContent, $routeLine)) {
+        if (!Str::contains($currentContent, "Route::resource('$tableName'")) {
             File::append($routePath, $routeLine);
-            $this->info("📍 Route resource '$tableName' telah ditambahkan ke web.php");
-        } else {
-            $this->warn("⚠️ Route untuk $tableName sudah ada, dilewati.");
+            return true;
         }
+        return false;
     }
 }
