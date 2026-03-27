@@ -118,4 +118,3 @@ This package is open-sourced under the **MIT License**.
 ## 👨‍💻 Author
 
 Developed by **[Rafael Nuansa](https://github.com/rafaelnuansa)**.
-```
