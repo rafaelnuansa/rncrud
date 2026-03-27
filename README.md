@@ -8,7 +8,7 @@
 
 ---
 
-## ✨ Features (v1.0.6)
+## ✨ Features (v1.0.5)
 
 * 🤖 **Interactive Prompts**  
   Visually choose which files to generate (Model, Controller, Migration, Views, or Routes).
