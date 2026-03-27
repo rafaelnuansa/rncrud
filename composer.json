@@ -1,6 +1,6 @@
 {
     "name": "rafaelnuansa/rncrud",
-    "description": "Custom Command untuk generate crud Laravel",
+    "description": "A powerful Artisan command to generate flexible Laravel CRUD scaffolding",
     "license": "MIT",
     "autoload": {
         "psr-4": {
